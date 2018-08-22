@@ -1,6 +1,7 @@
 ﻿namespace Okanshi
 
 open System
+open System.Collections.Generic
 open System.Diagnostics
 open Okanshi.Helpers
 
@@ -102,26 +103,23 @@ type BasicTimer(config : MonitorConfig, stopwatchFactory : Func<IStopwatch>) as 
     let updateStatistics elapsed = 
         lockWithArg syncRoot elapsed updateStatistics'
     
-    let getValues' () =
-        seq {
-            yield! avg.GetValues() |> Seq.map (fun x -> Measurement("value", x.Value)) |> Seq.cast<IMeasurement>
-            yield! total.GetValues() |> Seq.map (fun x -> Measurement("totalTime", x.Value)) |> Seq.cast<IMeasurement>
-            yield! count.GetValues() |> Seq.map (fun x -> Measurement("count", x.Value)) |> Seq.cast<IMeasurement>
-            yield! max.GetValues() |> Seq.map (fun x -> Measurement("max", x.Value)) |> Seq.cast<IMeasurement>
-            yield! min.GetValues() |> Seq.map (fun x -> Measurement("min", x.Value)) |> Seq.cast<IMeasurement>
-        }
+    let getValues' (list : List<IMeasurement>) =
+        avg.GetValueAs(list, "value")
+        total.GetValueAs(list, "totalTime")
+        count.GetValueAs(list, "count")
+        max.GetValueAs(list, "max")
+        min.GetValueAs(list, "min")
 
     let reset'() =
         max.Reset()
         min.Reset()
-        count.GetValuesAndReset() |> ignore
-        total.GetValuesAndReset() |> ignore
-        avg.GetValuesAndReset() |> ignore
+        count.GetValuesAndReset(new List<IMeasurement>())
+        total.GetValuesAndReset(new List<IMeasurement>()) 
+        avg.GetValuesAndReset(new List<IMeasurement>())
 
-    let getValuesAndReset'() =
-        let result = self.GetValues() |> Seq.toList
+    let getValuesAndReset'(list : List<IMeasurement>) =
+        self.GetValues(list) 
         reset'()
-        result |> List.toSeq
 
     new(config: MonitorConfig) = BasicTimer(config, fun () -> SystemStopwatch() :> IStopwatch)
     
@@ -142,14 +140,26 @@ type BasicTimer(config : MonitorConfig, stopwatchFactory : Func<IStopwatch>) as 
     member __.GetCount() = lock syncRoot (fun() -> count.GetValues() |> Seq.head)
     
     /// Gets the average calls time within the specified step
-    member __.GetValues() = lock syncRoot getValues'
+    member __.GetValues(list : List<IMeasurement>) = lock syncRoot (fun () -> getValues'(list))
+
+    /// Gets the value
+    member __.GetValues() = 
+        let tmp = new List<IMeasurement>();
+        __.GetValues(tmp)
+        tmp
     
     /// Get the maximum value of all calls
-    member __.GetMax() = lock syncRoot (fun () -> max.GetValues() |> Seq.head)
+    member __.GetMax() = lock syncRoot (fun () -> 
+        let tmp = new List<IMeasurement>()
+        max.GetValues(tmp) 
+        tmp)
     
     /// Get the manimum value of all calls
-    member __.GetMin() = lock syncRoot (fun () -> min.GetValues() |> Seq.head)
-    
+    member __.GetMin() = lock syncRoot (fun () -> 
+        let tmp = new List<IMeasurement>()
+        min.GetValues(tmp) 
+        tmp)
+
     /// Gets the the total time for all calls within the specified step
     member __.GetTotalTime() = lock syncRoot (fun () -> total.GetValues() |> Seq.head)
     
@@ -164,13 +174,13 @@ type BasicTimer(config : MonitorConfig, stopwatchFactory : Func<IStopwatch>) as 
     member __.Register(elapsed) = elapsed |> updateStatistics
 
     /// Gets the value and resets the monitor
-    member __.GetValuesAndReset() = Lock.lock syncRoot getValuesAndReset'
+    member __.GetValuesAndReset(list : List<IMeasurement>) = Lock.lock syncRoot (fun () -> getValuesAndReset'(list))
     
     interface ITimer with
         member self.Record(f : Func<'T>) = self.Record(f)
         member self.Record(f : Action) = self.Record(f)
-        member self.GetValues() = self.GetValues() |> Seq.cast
+        member self.GetValues(list : List<IMeasurement>) = self.GetValues(list)
         member self.Config = self.Config
         member self.Start() = self.Start()
         member self.Register(elapsed) = self.Register(elapsed)
-        member self.GetValuesAndReset() = self.GetValuesAndReset() |> Seq.cast
+        member self.GetValuesAndReset(list : List<IMeasurement>) = self.GetValuesAndReset(list)

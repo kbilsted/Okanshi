@@ -102,12 +102,12 @@ namespace Okanshi.Test
                 }
             }
 
-            public IEnumerable<IMeasurement> GetValues()
+            public void GetValues(List<IMeasurement> list)
             {
                 throw new System.NotImplementedException();
             }
 
-            public IEnumerable<IMeasurement> GetValuesAndReset()
+            public void GetValuesAndReset(List<IMeasurement> list)
             {
                 throw new System.NotImplementedException();
             }
@@ -126,12 +126,12 @@ namespace Okanshi.Test
                 }
             }
 
-            public IEnumerable<IMeasurement> GetValues()
+            public void GetValues(List<IMeasurement> list)
             {
                 throw new System.NotImplementedException();
             }
 
-            public IEnumerable<IMeasurement> GetValuesAndReset()
+            public void GetValuesAndReset(List<IMeasurement> list)
             {
                 throw new System.NotImplementedException();
             }

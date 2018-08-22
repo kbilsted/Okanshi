@@ -33,15 +33,15 @@ type HealthCheck(registry : IMonitorRegistry, config : MonitorConfig, check : Fu
     new (config, check) = HealthCheck(DefaultMonitorRegistry.Instance, config, check)
 
     /// Get value
-    member __.GetValues() = check'.GetValues()
+    member __.GetValues(list : List<IMeasurement>) = check'.GetValues(list)
 
     /// Gets the value and resets the monitor
-    member __.GetValuesAndReset() = check'.GetValuesAndReset()
+    member __.GetValuesAndReset(list : List<IMeasurement>) = check'.GetValuesAndReset(list)
     
     /// The config
     member __.Config = config'
 
     interface IMonitor with
-        member self.GetValues() = self.GetValues() |> Seq.cast
+        member self.GetValues(list : List<IMeasurement>) = self.GetValues(list)
         member self.Config = self.Config
-        member self.GetValuesAndReset() = self.GetValuesAndReset() |> Seq.cast
+        member self.GetValuesAndReset(list : List<IMeasurement>) = self.GetValuesAndReset(list)

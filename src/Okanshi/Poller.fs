@@ -36,11 +36,13 @@ type MetricMonitorRegistryPoller(registry : IMonitorRegistry, interval : TimeSpa
     let observers = new Collections.Generic.List<Func<Metric seq, Task>>()
 
     let convertMonitorToMetric (monitor : IMonitor) =
+        let tmp = new System.Collections.Generic.List<IMeasurement>()
+        monitor.GetValuesAndReset(tmp)
         {
             Name = monitor.Config.Name
             Timestamp = DateTimeOffset.UtcNow
             Tags = monitor.Config.Tags
-            Values = monitor.GetValuesAndReset()
+            Values = tmp |> Microsoft.FSharp.Collections.List.ofSeq 
         }
 
     let pollMetrics () =

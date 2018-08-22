@@ -1,6 +1,7 @@
 ﻿namespace Okanshi
 
 open System
+open System.Collections.Generic
 
 /// A tag used to attach information to a monitor
 type Tag = 
@@ -69,13 +70,13 @@ type Measurement<'a>(name : string, value: 'a) =
 type IMonitor = 
     
     /// Gets the values of the monitor
-    abstract GetValues : unit -> IMeasurement seq
+    abstract GetValues : list : List<IMeasurement> -> unit
     
     /// Gets the configuration of the monitor
     abstract Config : MonitorConfig
 
     /// Gets the values and resets the monitor
-    abstract GetValuesAndReset : unit -> IMeasurement seq
+    abstract GetValuesAndReset : list : List<IMeasurement> -> unit
 
 /// The types used to indicate the type of a value
 [<AbstractClass; Sealed>]
