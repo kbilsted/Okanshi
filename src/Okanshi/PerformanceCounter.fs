@@ -1,5 +1,6 @@
 ﻿namespace Okanshi
 
+open System.Collections.Generic
 open System.Diagnostics
 
 /// Performance counter configuration
@@ -35,15 +36,15 @@ type PerformanceCounterMonitor(registry : IMonitorRegistry, monitorConfig : Moni
         PerformanceCounterMonitor(DefaultMonitorRegistry.Instance, monitorConfig, performanceCounterConfig)
     
     /// Gets the performance counter value
-    member __.GetValues() = gauge.GetValues()
+    member __.GetValues(list : List<IMeasurement>) = gauge.GetValues(list)
     
     /// Gets the monitor config
     member __.Config = gauge.Config
 
     /// Gets the value and resets the monitor
-    member __.GetValuesAndReset() = gauge.GetValuesAndReset()
+    member __.GetValuesAndReset(list : List<IMeasurement>) = gauge.GetValuesAndReset(list)
     
     interface IMonitor with
-        member self.GetValues() = self.GetValues() |> Seq.cast
+        member self.GetValues(list : List<IMeasurement>) = self.GetValues(list)
         member self.Config = self.Config
-        member self.GetValuesAndReset() = self.GetValuesAndReset() |> Seq.cast
+        member self.GetValuesAndReset(list : List<IMeasurement>) = self.GetValuesAndReset(list)
