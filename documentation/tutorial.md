@@ -288,7 +288,6 @@ Example:
     timer.Record(() => Thread.Sleep(100))
 ```
 
-
 #### 2.3.2. SlaTimer
 
 A service-level agreement (SLA) is a commitment between a service provider and a client. For example, the service provider promise to respond to a request within an agreed amount of time. 
@@ -298,6 +297,27 @@ A SLA-Timer is a special timer, that keeps track of your SLA's and whether they 
 The timer implements two timers one for registrations below the SLA and one above. Each timer provides the following data "average", "total time", "count", "min" and "max". We keep track of both executions below the SLA and above. The reason is, when things are going bad we want to know how bad we are doing. By tracking timings below our SLA we can see if we get dangerously close to our SLA, it also 
 enable us to better understand the periods where we break our SLA by knowing how "business as usual" looks like.
 
+
+
+#### 1.3.2 Apdex timer
+
+Apdex (Application Performance Index) is an open standard developed by an alliance of companies that defines a standardized method to report, benchmark, and track application performance.
+Apdex operates with three thresholds estimating end user satisfaction: satisfied, tolerating and frustrating.
+
+* Satisfied: Response time less than or equal to T seconds.
+* Tolerating: Response time between T seconds and 4T seconds.
+* Frustrating: Response time greater than 4 T seconds.
+
+The Apdex score between 0 and 1 is calculated using the following:
+
+     Satisfied + (Tolerating/2) 
+     ---------------------------
+     Total number of requests
+
+see http://www.apdex.org/overview.html for more details.
+
+The apdex uses a timer internally for its bookkeeping, and returns all data from it. 
+Thus you can do both Apdex calculations, and keep track of the actual time spent beyond the (im)precision of the Apdex score.
 
 
 ### 2.4. Performance counters
