@@ -379,20 +379,9 @@ type ApdexTimer(config : MonitorConfig, stopwatchFactory : Func<IStopwatch>, tol
         let elapsed = stopwatch.Time(f)
         elapsed |> updateStatistics
     
-    /// Gets the rate of calls timed within the specified step
-    member __.GetCount() = lock syncRoot (fun() -> timer.GetCount())
-    
     /// Gets the average calls time within the specified step
     member __.GetValues() = lock syncRoot getValues'
     
-    /// Get the maximum value of all calls
-    member __.GetMax() = lock syncRoot (fun () -> timer.GetMax())
-    
-    /// Get the manimum value of all calls
-    member __.GetMin() = lock syncRoot (fun () -> timer.GetMin())
-    
-    /// Gets the the total time for all calls within the specified step
-    member __.GetTotalTime() = lock syncRoot (fun () -> timer.GetTotalTime())
     
     /// Calculate the apdex score
     member __.GetApdex() = lock syncRoot calcApdex'
