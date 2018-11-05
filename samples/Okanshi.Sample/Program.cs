@@ -5,66 +5,77 @@ using Newtonsoft.Json;
 
 namespace Okanshi.Sample
 {
-    public class Program
-    {
+	public static class OkanshiIntegrator
+	{
+		public static MonitorFactory CreateFactory(TimeSpan pollFrequency, IEnumerable<Tag> defaultTags, bool pollOnExit = false)
+		{
+			defaultTags = defaultTags ?? new Tag[0];
+			var registry = new OkanshiMonitorRegistry();
+			new MyObserver(new MetricMonitorRegistryPoller(registry, pollFrequency, pollOnExit));
+			var factory = new MonitorFactory(registry, defaultTags);
+			return factory;
+		}
+
+		public static ZeroFilterFactory CreateZeroFactory(TimeSpan pollFrequency, IEnumerable<Tag> defaultTags, bool pollOnExit = false)
+		{
+			defaultTags = defaultTags ?? new Tag[0];
+			var registry = new OkanshiMonitorRegistry();
+			new MyObserver(new MetricMonitorRegistryPoller(registry, pollFrequency, pollOnExit));
+			var factory = new ZeroFilterFactory(registry, defaultTags);
+			return factory;
+		}
+	}
+
+	class MyObserver : IMetricObserver
+	{
+		public MyObserver(IMetricPoller poller)
+		{
+			poller.RegisterObserver(Update);
+		}
+
+		public async Task Update(IEnumerable<Metric> metrics)
+		{
+			Console.WriteLine("***************************************************************");
+			Console.WriteLine(JsonConvert.SerializeObject(metrics, Formatting.Indented));
+			Console.WriteLine("***************************************************************\n\n");
+		}
+
+		public void Dispose()
+		{ }
+	}
+
+	public class Program
+	{
+		public static MonitorFactory okanshiMonitor1h = OkanshiIntegrator.CreateFactory(
+			TimeSpan.FromHours(1), 
+			new[] { new Tag("Environment", "Production"), });
+
+		public static ZeroFilterFactory okanshiMonitorZeroFilter2m = OkanshiIntegrator.CreateZeroFactory(
+			TimeSpan.FromMinutes(2), 
+			new[] { new Tag("Environment", "Production"), });
+
         public static void Main(string[] args)
-        {
-            var registry = DefaultMonitorRegistry.Instance;
-            new MyObserver(new MetricMonitorRegistryPoller(registry, TimeSpan.FromSeconds(2), false));
+		{
+			Console.WriteLine("Monitor key presses. Start typing to measure");
+			while (true)
+			{
+				okanshiMonitor1h.Counter("circles").Increment();
+				var info = Console.ReadKey();
+				string measurementName;
+				if ((int) info.Modifiers == 0)
+				{
+					measurementName = info.Key.ToString();
+				}
+				else
+				{
+					measurementName = $"{info.Modifiers} + {info.Key}";
+				}
 
-            Console.WriteLine("Monitor key presses. Start typing to measure");
-            while (true)
-            {
-                var info = Console.ReadKey();
-                string measurementName;
-                if ((int) info.Modifiers == 0)
-                {
-                    measurementName = info.Key.ToString();
-                }
-                else
-                {
-                    measurementName = $"{info.Modifiers} + {info.Key}";
-                }
+				System.Console.WriteLine();
 
-                System.Console.WriteLine();
-
-                CreateCounter(measurementName, registry).Increment();
-            }
-        }
-
-        private static CounterZeroFilter<long> CreateCounter(string measurementName, OkanshiMonitorRegistry registry)
-        {
-            var config = MonitorConfig.Build("Key press").WithTags(OkanshiMonitor.DefaultTags)
-                .WithTags(new[] {new Tag("combination", measurementName)});
-            var monitor = registry.GetOrAdd(config, x => new CounterZeroFilter<long>(new Counter(x)));
-            return monitor;
-        }
-
-	    private static CounterZeroFilter<long> FilterCounter(string name, IEnumerable<Tag> tags)
-	    {
-		    var config = MonitorConfig.Build(name)
-			    .WithTags(OkanshiMonitor.DefaultTags)
-			    .WithTags(tags);
-		    var registry = DefaultMonitorRegistry.Instance;
-		    var monitor = registry.GetOrAdd(config, x => new CounterZeroFilter<long>(new Counter(x)));
-		    return monitor;
-	    }
-
-        class MyObserver : IMetricObserver
-        {
-            public MyObserver(IMetricPoller poller)
-            {
-                poller.RegisterObserver(Update);
-            }
-
-            public async Task Update(IEnumerable<Metric> metrics)
-            {
-                Console.WriteLine("***************************************************************");
-                Console.WriteLine(JsonConvert.SerializeObject(metrics, Formatting.Indented));
-                Console.WriteLine("***************************************************************\n\n");
-            }
-
-            public void Dispose() { }
-        }
-    }
+				okanshiMonitorZeroFilter2m.Counter("Key press", new[] {new Tag("combination", measurementName)}).Increment();
+				//CreateCounter(measurementName, registry).Increment();
+			}
+		}
+	}
 }
